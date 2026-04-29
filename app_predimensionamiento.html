@@ -1,1 +1,828 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Predimensionamiento MCI — TP1 Propulsión · UTN FRH</title>
+<style>
+/* ── RESET & BASE ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:        #f2f0ec;
+  --surface:   #ffffff;
+  --surface2:  #f8f7f4;
+  --border:    #e2e0db;
+  --border2:   #d0cec8;
+  --text:      #1a1a18;
+  --text2:     #6b6963;
+  --text3:     #a8a49e;
+  --blue:      #1d6fa8;
+  --blue-l:    #e8f1f8;
+  --red:       #b83c1e;
+  --red-l:     #fdf0ec;
+  --green:     #1a7a52;
+  --green-l:   #e8f5ef;
+  --amber:     #a06010;
+  --amber-l:   #fdf5e6;
+  --radius:    6px;
+  --shadow:    0 1px 4px rgba(0,0,0,0.08);
+}
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg); color: var(--text);
+  font-size: 13px; line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ── HEADER ───────────────────────────────────────────────── */
+.app-header {
+  background: #1a1a18; color: #fff;
+  padding: 10px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.app-header h1 { font-size: 13px; font-weight: 500; letter-spacing: -0.01em; }
+.app-header .meta { font-size: 11px; color: #888; }
+
+/* ── LAYOUT ───────────────────────────────────────────────── */
+.app-body {
+  display: grid;
+  grid-template-columns: 248px 1fr 260px;
+  gap: 12px;
+  padding: 12px;
+  max-width: 1280px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+/* ── CARDS ────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.card-header {
+  padding: 8px 12px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--text3);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-body { padding: 12px; }
+
+/* ── CYCLE TABS ───────────────────────────────────────────── */
+.cycle-tabs {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px; margin-bottom: 0;
+}
+.cycle-tab {
+  padding: 6px 4px; border: 1px solid var(--border2);
+  border-radius: var(--radius); font-size: 12px; font-weight: 600;
+  text-align: center; cursor: pointer;
+  background: var(--surface); color: var(--text2);
+  transition: all 0.15s;
+}
+.cycle-tab:hover { border-color: var(--blue); color: var(--blue); }
+.cycle-tab.active { background: #1a1a18; color: #fff; border-color: #1a1a18; }
+
+/* ── FORM CONTROLS ────────────────────────────────────────── */
+.field { margin-bottom: 10px; }
+.field:last-child { margin-bottom: 0; }
+.field label {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 11px; color: var(--text2); margin-bottom: 4px;
+}
+.field label .val {
+  font-size: 12px; font-weight: 700; color: var(--text); font-family: monospace;
+}
+.field .hint {
+  font-size: 10px; color: var(--text3); margin-top: 3px; font-style: italic;
+}
+input[type=range] {
+  width: 100%; height: 4px; cursor: pointer;
+  accent-color: #1a1a18;
+}
+input[type=number], select {
+  width: 100%; padding: 5px 8px;
+  border: 1px solid var(--border2); border-radius: var(--radius);
+  font-size: 12px; font-family: inherit;
+  background: var(--surface); color: var(--text);
+  outline: none;
+}
+input[type=number]:focus, select:focus {
+  border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-l);
+}
+.field.disabled { opacity: 0.35; pointer-events: none; }
+.sep { height: 1px; background: var(--border); margin: 10px 0; }
+.group-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.07em;
+  text-transform: uppercase; color: var(--text3);
+  margin: 12px 0 8px;
+}
+.group-label:first-child { margin-top: 0; }
+
+/* ── DIAGRAM AREA ─────────────────────────────────────────── */
+.diagram-wrap {
+  position: relative;
+  background: var(--surface2);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+#pvDiagram { display: block; width: 100%; }
+.diagram-controls {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 12px; border-top: 1px solid var(--border);
+}
+.toggle-group { display: flex; gap: 4px; }
+.toggle-btn {
+  font-size: 11px; padding: 3px 10px;
+  border: 1px solid var(--border2); border-radius: var(--radius);
+  background: var(--surface); color: var(--text2); cursor: pointer;
+}
+.toggle-btn.active { background: #1a1a18; color: #fff; border-color: #1a1a18; }
+.diagram-note { font-size: 10px; color: var(--text3); }
+
+/* ── RESULTS ──────────────────────────────────────────────── */
+.states-table { width: 100%; border-collapse: collapse; }
+.states-table th {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--text3);
+  padding: 4px 8px; text-align: right;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.states-table th:first-child { text-align: left; }
+.states-table td {
+  padding: 5px 8px; font-size: 11px; font-family: monospace;
+  border-bottom: 1px solid var(--border); text-align: right;
+}
+.states-table td:first-child { text-align: left; font-weight: 600; font-family: inherit; }
+.states-table tr:last-child td { border-bottom: none; }
+.states-table tr.tmax td { background: #fff8f5; }
+.state-dot {
+  display: inline-block; width: 8px; height: 8px;
+  border-radius: 50%; margin-right: 4px; vertical-align: middle;
+}
+
+/* ── KPI GRID ─────────────────────────────────────────────── */
+.kpi-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 6px; padding: 10px;
+}
+.kpi {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 8px 10px;
+}
+.kpi-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
+.kpi-value { font-size: 18px; font-weight: 700; color: var(--text); margin-top: 1px; line-height: 1.1; }
+.kpi-unit  { font-size: 10px; font-weight: 400; color: var(--text2); }
+.kpi.highlight { background: var(--red-l); border-color: #f0c0b0; }
+.kpi.highlight .kpi-value { color: var(--red); }
+
+/* ── VALIDATION ───────────────────────────────────────────── */
+.val-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px; border-bottom: 1px solid var(--border);
+  font-size: 11px;
+}
+.val-row:last-child { border-bottom: none; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dot-green  { background: #22c55e; }
+.dot-yellow { background: #f59e0b; }
+.dot-red    { background: #ef4444; }
+.val-label { flex: 1; color: var(--text2); }
+.val-num { font-family: monospace; font-weight: 700; color: var(--text); }
+
+/* ── GEO TABLE ────────────────────────────────────────────── */
+.geo-table { width: 100%; border-collapse: collapse; }
+.geo-table td {
+  padding: 5px 12px; font-size: 11px;
+  border-bottom: 1px solid var(--border);
+}
+.geo-table td:first-child { color: var(--text2); }
+.geo-table td:last-child { text-align: right; font-weight: 700; font-family: monospace; }
+.geo-table tr:last-child td { border-bottom: none; }
+
+/* ── FOOTER ───────────────────────────────────────────────── */
+.app-footer {
+  text-align: center; padding: 12px;
+  font-size: 10px; color: var(--text3);
+}
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>Predimensionamiento de motores aeronáuticos — Ciclos termodinámicos ideales</h1>
+  <span class="meta">TP1 Propulsión · UTN FRH · Grupo 4 · 2025</span>
+</div>
+
+<div class="app-body">
+
+  <!-- ══════════════════════════════════════════════════════
+       COLUMNA IZQUIERDA — ENTRADAS
+  ══════════════════════════════════════════════════════ -->
+  <div style="display:flex;flex-direction:column;gap:10px;">
+
+    <div class="card">
+      <div class="card-header">Ciclo termodinámico</div>
+      <div class="card-body">
+        <div class="cycle-tabs">
+          <div class="cycle-tab active" onclick="setCiclo('otto')">Otto</div>
+          <div class="cycle-tab" onclick="setCiclo('diesel')">Diesel</div>
+          <div class="cycle-tab" onclick="setCiclo('sabathe')">Sabathé</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Condiciones de misión</div>
+      <div class="card-body">
+        <div class="field">
+          <label>Altitud <span class="val" id="lbl_h">5.000 ft</span></label>
+          <input type="range" id="sl_h" min="0" max="15000" step="500" value="5000" oninput="update()">
+          <p class="hint" id="hint_isa">T₁ = — · p₁ = —</p>
+        </div>
+        <div class="field">
+          <label>Potencia requerida <span class="val" id="lbl_pef">100 HP</span></label>
+          <input type="range" id="sl_pef" min="20" max="400" step="5" value="100" oninput="update()">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Combustible y mezcla</div>
+      <div class="card-body">
+        <div class="field">
+          <label>Combustible</label>
+          <select id="sel_fuel" onchange="update()">
+            <option value="C8H18">C₈H₁₈ — Isoctano (AVGAS)</option>
+            <option value="C7H16">C₇H₁₆ — Heptano</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Relación de mezcla λ <span class="val" id="lbl_lam">1,10</span></label>
+          <input type="range" id="sl_lam" min="0.7" max="1.4" step="0.01" value="1.10" oninput="update()">
+          <p class="hint" id="hint_qin">q_in = —</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Parámetros del ciclo</div>
+      <div class="card-body">
+        <div class="field">
+          <label>Rel. de compresión r_v <span class="val" id="lbl_rv">8,5</span></label>
+          <input type="range" id="sl_rv" min="4" max="12" step="0.1" value="8.5" oninput="update()">
+        </div>
+        <div class="field">
+          <label>Índice adiabático κ <span class="val" id="lbl_kap">1,40</span></label>
+          <input type="range" id="sl_kap" min="1.30" max="1.40" step="0.01" value="1.40" oninput="update()">
+        </div>
+        <div class="field" id="field_rc">
+          <label>Relación de corte r_c <span class="val" id="lbl_rc">2,0</span></label>
+          <input type="range" id="sl_rc" min="1.2" max="4.5" step="0.1" value="2.0" oninput="update()">
+        </div>
+        <div class="field" id="field_rp">
+          <label>Relación de presión r_p <span class="val" id="lbl_rp">1,5</span></label>
+          <input type="range" id="sl_rp" min="1.1" max="3.0" step="0.1" value="1.5" oninput="update()">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Geometría del motor</div>
+      <div class="card-body">
+        <div class="field">
+          <label>N° de cilindros</label>
+          <select id="sel_ncil" onchange="update()">
+            <option value="2">2 cilindros</option>
+            <option value="4" selected>4 cilindros</option>
+            <option value="6">6 cilindros</option>
+            <option value="8">8 cilindros</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Relación s/D <span class="val" id="lbl_sd">1,00</span></label>
+          <input type="range" id="sl_sd" min="0.7" max="1.4" step="0.05" value="1.00" oninput="update()">
+        </div>
+        <div class="field">
+          <label>Régimen n <span class="val" id="lbl_rpm">2.800 RPM</span></label>
+          <input type="range" id="sl_rpm" min="1000" max="4000" step="100" value="2800" oninput="update()">
+        </div>
+        <div class="field">
+          <label>Ef. volumétrica η_vol <span class="val" id="lbl_evol">0,85</span></label>
+          <input type="range" id="sl_evol" min="0.60" max="0.95" step="0.01" value="0.85" oninput="update()">
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       COLUMNA CENTRAL — DIAGRAMA p-v
+  ══════════════════════════════════════════════════════ -->
+  <div style="display:flex;flex-direction:column;gap:10px;">
+    <div class="card">
+      <div class="card-header">
+        <span>Diagrama p-v</span>
+        <span id="ciclo-badge" style="font-size:11px;background:#1a1a18;color:#fff;padding:2px 8px;border-radius:4px;letter-spacing:0.05em;">OTTO</span>
+      </div>
+      <div class="diagram-wrap">
+        <svg id="pvDiagram" viewBox="0 0 560 380" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="diagram-controls">
+        <div class="toggle-group">
+          <button class="toggle-btn active" onclick="setScale('linear',this)">Lineal</button>
+          <button class="toggle-btn" onclick="setScale('log',this)">Log</button>
+        </div>
+        <span class="diagram-note" id="diagram-note">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       COLUMNA DERECHA — RESULTADOS
+  ══════════════════════════════════════════════════════ -->
+  <div style="display:flex;flex-direction:column;gap:10px;">
+
+    <div class="card">
+      <div class="card-header">Estados termodinámicos</div>
+      <table class="states-table" id="statesTable">
+        <thead>
+          <tr>
+            <th>Estado</th>
+            <th>T (K)</th>
+            <th>p (kPa)</th>
+            <th>v (m³/kg)</th>
+          </tr>
+        </thead>
+        <tbody id="statesBody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Desempeño del ciclo</div>
+      <div class="kpi-grid" id="kpiGrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Geometría calculada</div>
+      <table class="geo-table" id="geoTable"></table>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Validación — O-235-L2C</div>
+      <div id="validacion"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="app-footer">
+  Ciclo de aire frío estándar · κ = 1,4 · R = 287 J/(kg·K) · ISA ICAO Doc. 7488-CD<br>
+  TP1 Propulsión · UTN FRH · Grupo 4 · 2025 · Cátedra Gagliardi / Bracco
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════
+     MÓDULOS DE CÁLCULO (funciones puras validadas — Etapa 3)
+════════════════════════════════════════════════════════ -->
+<script>
+// ── MÓDULO ISA ────────────────────────────────────────────
+function calcularISA(h_ft) {
+  const h = h_ft * 0.3048;
+  const T0 = 288.15, p0 = 101325, L = 0.0065, R = 287.05, g = 9.80665;
+  const T = T0 - L * h;
+  const p = p0 * Math.pow(T / T0, g / (L * R));
+  const rho = p / (R * T);
+  return { T, p: p / 1000, rho };
+}
+
+// ── MÓDULO COMBUSTIÓN ─────────────────────────────────────
+const FUELS = {
+  C8H18: { M: 114.23, nC: 8,  nH: 18, PCI: 44300 },
+  C7H16: { M: 100.20, nC: 7,  nH: 16, PCI: 44600 }
+};
+function calcularCombustion(key, lambda) {
+  const f = FUELS[key];
+  const molesO2 = f.nC + f.nH / 4;
+  const AFR_est  = (molesO2 * 32) / (0.233 * f.M);
+  const AFR_real = lambda * AFR_est;
+  const qin      = f.PCI / (1 + AFR_real);
+  return { AFR_est, AFR_real, qin, PCI: f.PCI };
+}
+
+// ── MÓDULO OTTO ───────────────────────────────────────────
+function calcularOtto(T1, p1, rv, kap, qin) {
+  const R = 287.05, cv = R / (kap - 1);
+  const v1 = R * T1 / (p1 * 1e3);
+  const T2 = T1 * Math.pow(rv, kap - 1);
+  const p2 = p1 * Math.pow(rv, kap);
+  const v2 = v1 / rv;
+  const T3 = T2 + qin * 1e3 / cv;
+  const p3 = p2 * T3 / T2;
+  const v3 = v2;
+  const T4 = T3 / Math.pow(rv, kap - 1);
+  const p4 = p3 / Math.pow(rv, kap);
+  const v4 = v1;
+  const eta = 1 - 1 / Math.pow(rv, kap - 1);
+  const qSal = cv * (T4 - T1) / 1e3;
+  const wNeto = qin - qSal;
+  const PME = wNeto * 1e3 / (v1 - v2) / 1e3;
+  return { estados:[{T:T1,p:p1,v:v1},{T:T2,p:p2,v:v2},{T:T3,p:p3,v:v3},{T:T4,p:p4,v:v4}], eta, qin, qSal, wNeto, PME, Tmax:T3, Pmax:p3, v1, v2, kap };
+}
+
+// ── MÓDULO DIESEL ─────────────────────────────────────────
+function calcularDiesel(T1, p1, rv, rc, kap, qin) {
+  const R = 287.05, cv = R / (kap - 1);
+  const v1 = R * T1 / (p1 * 1e3);
+  const T2 = T1 * Math.pow(rv, kap - 1);
+  const p2 = p1 * Math.pow(rv, kap);
+  const v2 = v1 / rv;
+  const T3 = T2 * rc; const p3 = p2; const v3 = v2 * rc;
+  const T4 = T3 * Math.pow(rc / rv, kap - 1);
+  const p4 = p3 / Math.pow(rv / rc, kap);
+  const v4 = v1;
+  const eta = 1 - (1 / Math.pow(rv, kap - 1)) * (Math.pow(rc, kap) - 1) / (kap * (rc - 1));
+  const qSal = cv * (T4 - T1) / 1e3;
+  const wNeto = qin - qSal;
+  const PME = wNeto * 1e3 / (v1 - v2) / 1e3;
+  return { estados:[{T:T1,p:p1,v:v1},{T:T2,p:p2,v:v2},{T:T3,p:p3,v:v3},{T:T4,p:p4,v:v4}], eta, qin, qSal, wNeto, PME, Tmax:T3, Pmax:p3, v1, v2, kap };
+}
+
+// ── MÓDULO SABATHÉ ────────────────────────────────────────
+function calcularSabathe(T1, p1, rv, rc, rp, kap, qin) {
+  const R = 287.05, cv = R / (kap - 1);
+  const v1 = R * T1 / (p1 * 1e3);
+  const T2 = T1 * Math.pow(rv, kap - 1);
+  const p2 = p1 * Math.pow(rv, kap);
+  const v2 = v1 / rv;
+  const T3 = T2 * rp; const p3 = p2 * rp; const v3 = v2;
+  const T4 = T3 * rc; const p4 = p3;       const v4 = v3 * rc;
+  const T5 = T4 * Math.pow(rp * rc / rv, kap - 1);
+  const p5 = p4 / Math.pow(rv / (rp * rc), kap);
+  const v5 = v1;
+  const eta = 1 - (1 / Math.pow(rv, kap - 1)) *
+    (rp * Math.pow(rc, kap) - 1) / ((rp - 1) + kap * rp * (rc - 1));
+  const qSal = cv * (T5 - T1) / 1e3;
+  const wNeto = qin - qSal;
+  const PME = wNeto * 1e3 / (v1 - v2) / 1e3;
+  return { estados:[{T:T1,p:p1,v:v1},{T:T2,p:p2,v:v2},{T:T3,p:p3,v:v3},{T:T4,p:p4,v:v4},{T:T5,p:p5,v:v5}], eta, qin, qSal, wNeto, PME, Tmax:T4, Pmax:p3, v1, v2, kap };
+}
+
+// ── MÓDULO GEOMETRÍA ──────────────────────────────────────
+function calcularGeometria(PME_kPa, Pef_HP, n_rpm, eta_vol, N_cil, sD) {
+  const Pef_W = Pef_HP * 745.7;
+  const Vd  = (Pef_W * 2) / (PME_kPa * 1e3 * (n_rpm / 60) * eta_vol);
+  const Vu  = Vd / N_cil;
+  const D   = Math.pow((4 * Vu) / (Math.PI * sD), 1/3);
+  const S   = sD * D;
+  return { Vd_L: Vd * 1000, Vu_cc: Vu * 1e6, D_mm: D * 1000, S_mm: S * 1000 };
+}
+
+// ════════════════════════════════════════════════════════
+// ESTADO GLOBAL DE LA APP
+// ════════════════════════════════════════════════════════
+let ciclo    = 'otto';
+let escala   = 'linear';
+let lastRes  = null;
+
+function setCiclo(c) {
+  ciclo = c;
+  document.querySelectorAll('.cycle-tab').forEach((t,i) => {
+    t.classList.toggle('active', ['otto','diesel','sabathe'][i] === c);
+  });
+  document.getElementById('ciclo-badge').textContent = c.toUpperCase().replace('SABATHE','SABATHÉ');
+  const isDiesel  = c === 'diesel' || c === 'sabathe';
+  const isSabathe = c === 'sabathe';
+  document.getElementById('field_rc').classList.toggle('disabled', !isDiesel);
+  document.getElementById('field_rp').classList.toggle('disabled', !isSabathe);
+  update();
+}
+
+function setScale(s, btn) {
+  escala = s;
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.toggle('active', b === btn));
+  if (lastRes) dibujarDiagrama(lastRes);
+}
+
+// ════════════════════════════════════════════════════════
+// FUNCIÓN PRINCIPAL — recalcula todo
+// ════════════════════════════════════════════════════════
+function update() {
+  // Leer controles
+  const h    = +document.getElementById('sl_h').value;
+  const pef  = +document.getElementById('sl_pef').value;
+  const fuel = document.getElementById('sel_fuel').value;
+  const lam  = +document.getElementById('sl_lam').value;
+  const rv   = +document.getElementById('sl_rv').value;
+  const kap  = +document.getElementById('sl_kap').value;
+  const rc   = +document.getElementById('sl_rc').value;
+  const rp   = +document.getElementById('sl_rp').value;
+  const ncil = +document.getElementById('sel_ncil').value;
+  const sd   = +document.getElementById('sl_sd').value;
+  const rpm  = +document.getElementById('sl_rpm').value;
+  const evol = +document.getElementById('sl_evol').value;
+
+  // Actualizar etiquetas
+  document.getElementById('lbl_h').textContent   = h.toLocaleString('es-AR') + ' ft';
+  document.getElementById('lbl_pef').textContent  = pef + ' HP';
+  document.getElementById('lbl_lam').textContent  = lam.toFixed(2);
+  document.getElementById('lbl_rv').textContent   = rv.toFixed(1);
+  document.getElementById('lbl_kap').textContent  = kap.toFixed(2);
+  document.getElementById('lbl_rc').textContent   = rc.toFixed(1);
+  document.getElementById('lbl_rp').textContent   = rp.toFixed(1);
+  document.getElementById('lbl_sd').textContent   = sd.toFixed(2);
+  document.getElementById('lbl_rpm').textContent  = rpm.toLocaleString('es-AR') + ' RPM';
+  document.getElementById('lbl_evol').textContent = evol.toFixed(2);
+
+  // ISA
+  const isa  = calcularISA(h);
+  document.getElementById('hint_isa').textContent =
+    `T₁ = ${isa.T.toFixed(1)} K  ·  p₁ = ${isa.p.toFixed(1)} kPa  ·  ρ = ${isa.rho.toFixed(3)} kg/m³`;
+
+  // Combustión
+  const comb = calcularCombustion(fuel, lam);
+  document.getElementById('hint_qin').textContent =
+    `q_in = ${comb.qin.toFixed(0)} kJ/kg  ·  AFR = ${comb.AFR_real.toFixed(2)}`;
+
+  // Ciclo
+  let res;
+  if      (ciclo === 'otto')    res = calcularOtto   (isa.T, isa.p, rv, kap, comb.qin);
+  else if (ciclo === 'diesel')  res = calcularDiesel  (isa.T, isa.p, rv, rc, kap, comb.qin);
+  else                          res = calcularSabathe (isa.T, isa.p, rv, rc, rp, kap, comb.qin);
+
+  lastRes = res;
+
+  // Geometría
+  const geo = calcularGeometria(res.PME, pef, rpm, evol, ncil, sd);
+
+  // Renderizar paneles
+  renderStates(res);
+  renderKPIs(res);
+  renderGeo(geo);
+  renderValidacion(res, geo);
+  dibujarDiagrama(res);
+}
+
+// ════════════════════════════════════════════════════════
+// RENDER ESTADOS
+// ════════════════════════════════════════════════════════
+const COLORS = ['#1d6fa8','#1d6fa8','#b83c1e','#1d6fa8','#1a7a52'];
+const LABELS_OTTO    = ['1 — Admisión','2 — Post-compresión','3 — Post-combustión ★','4 — Post-expansión'];
+const LABELS_DIESEL  = ['1 — Admisión','2 — Post-compresión','3 — Post-combustión ★','4 — Post-expansión'];
+const LABELS_SABATHE = ['1 — Admisión','2 — Post-compresión','3 — Post-comb. isocórica','4 — Post-comb. isobárica ★','5 — Post-expansión'];
+
+function renderStates(res) {
+  const labels = ciclo === 'sabathe' ? LABELS_SABATHE : (ciclo === 'diesel' ? LABELS_DIESEL : LABELS_OTTO);
+  const tmaxIdx = res.estados.findIndex(e => e.T === res.Tmax);
+  let html = '';
+  res.estados.forEach((e, i) => {
+    const isTmax = i === tmaxIdx;
+    html += `<tr class="${isTmax ? 'tmax' : ''}">
+      <td><span class="state-dot" style="background:${COLORS[i]}"></span>${labels[i]}</td>
+      <td>${e.T.toFixed(0)}</td>
+      <td>${e.p.toFixed(0)}</td>
+      <td>${e.v.toFixed(4)}</td>
+    </tr>`;
+  });
+  document.getElementById('statesBody').innerHTML = html;
+}
+
+// ════════════════════════════════════════════════════════
+// RENDER KPIs
+// ════════════════════════════════════════════════════════
+function renderKPIs(res) {
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi">
+      <div class="kpi-label">η_th</div>
+      <div class="kpi-value">${(res.eta*100).toFixed(1)}<span class="kpi-unit"> %</span></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">PME ideal</div>
+      <div class="kpi-value">${res.PME.toFixed(0)}<span class="kpi-unit"> kPa</span></div>
+    </div>
+    <div class="kpi highlight">
+      <div class="kpi-label">T_max</div>
+      <div class="kpi-value">${res.Tmax.toFixed(0)}<span class="kpi-unit"> K</span></div>
+    </div>
+    <div class="kpi highlight">
+      <div class="kpi-label">P_max</div>
+      <div class="kpi-value">${res.Pmax.toFixed(0)}<span class="kpi-unit"> kPa</span></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">q_in</div>
+      <div class="kpi-value">${res.qin.toFixed(0)}<span class="kpi-unit"> kJ/kg</span></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">w_neto</div>
+      <div class="kpi-value">${res.wNeto.toFixed(0)}<span class="kpi-unit"> kJ/kg</span></div>
+    </div>`;
+}
+
+// ════════════════════════════════════════════════════════
+// RENDER GEOMETRÍA
+// ════════════════════════════════════════════════════════
+function renderGeo(geo) {
+  document.getElementById('geoTable').innerHTML = `
+    <tr><td>Cilindrada total V_d</td><td>${geo.Vd_L.toFixed(2)} L</td></tr>
+    <tr><td>Cilindrada unitaria V_u</td><td>${geo.Vu_cc.toFixed(0)} cm³</td></tr>
+    <tr><td>Diámetro D</td><td>${geo.D_mm.toFixed(1)} mm</td></tr>
+    <tr><td>Carrera S</td><td>${geo.S_mm.toFixed(1)} mm</td></tr>`;
+}
+
+// ════════════════════════════════════════════════════════
+// RENDER VALIDACIÓN
+// ════════════════════════════════════════════════════════
+function renderValidacion(res, geo) {
+  // PME real del O-235-L2C a 5.000 ft: 835 kPa (calculada en cálculo manual)
+  const PME_real_ref = 835;
+  const factor = (PME_real_ref / res.PME);
+  const dotFactor = factor > 0.35 && factor < 0.60 ? 'dot-green' : factor < 0.25 ? 'dot-red' : 'dot-yellow';
+
+  // Geometría O-235: D=111,1mm, S=98,4mm
+  const diffD = Math.abs(geo.D_mm - 111.1) / 111.1 * 100;
+  const dotD  = diffD < 15 ? 'dot-yellow' : 'dot-red';
+
+  document.getElementById('validacion').innerHTML = `
+    <div class="val-row">
+      <div class="dot ${dotFactor}"></div>
+      <div class="val-label">Factor ideal → real (PME)</div>
+      <div class="val-num">${factor.toFixed(3)}</div>
+    </div>
+    <div class="val-row">
+      <div class="dot dot-green"></div>
+      <div class="val-label">η_th ciclo ideal</div>
+      <div class="val-num">${(res.eta*100).toFixed(1)} %</div>
+    </div>
+    <div class="val-row">
+      <div class="dot ${dotD}"></div>
+      <div class="val-label">Dif. diámetro vs O-235</div>
+      <div class="val-num">${diffD.toFixed(1)} %</div>
+    </div>
+    <div class="val-row" style="background:#f8f7f4;font-size:10px;color:#a8a49e;padding:6px 12px;">
+      PME real O-235-L2C: 835 kPa · D real: 111,1 mm · S real: 98,4 mm
+    </div>`;
+}
+
+// ════════════════════════════════════════════════════════
+// DIAGRAMA p-v (SVG)
+// ════════════════════════════════════════════════════════
+function dibujarDiagrama(res) {
+  const svg  = document.getElementById('pvDiagram');
+  const W    = 560, H = 380;
+  const ml   = 64, mr = 20, mt = 28, mb = 40;
+  const pw   = W - ml - mr;
+  const ph   = H - mt - mb;
+
+  const est  = res.estados;
+  const kap  = res.kap;
+
+  // Rangos con padding
+  const allV = est.map(e => e.v);
+  const allP = est.map(e => e.p);
+  const vMin = Math.min(...allV) * 0.92;
+  const vMax = Math.max(...allV) * 1.05;
+  const pMin = Math.min(...allP) * 0.85;
+  const pMax = Math.max(...allP) * 1.08;
+
+  // Funciones de transformación de coordenadas
+  function tx(v) {
+    if (escala === 'log') return ml + (Math.log(v/vMin) / Math.log(vMax/vMin)) * pw;
+    return ml + (v - vMin) / (vMax - vMin) * pw;
+  }
+  function ty(p) {
+    if (escala === 'log') return mt + ph - (Math.log(p/pMin) / Math.log(pMax/pMin)) * ph;
+    return mt + ph - (p - pMin) / (pMax - pMin) * ph;
+  }
+
+  // Generar curva isoentrópica entre dos estados
+  function isoentropica(v1, p1, v2, N=60) {
+    const pts = [];
+    for (let i = 0; i <= N; i++) {
+      const t = i / N;
+      const v = v1 + t * (v2 - v1);
+      const p = p1 * Math.pow(v1 / v, kap);
+      pts.push([tx(v), ty(p)]);
+    }
+    return pts.map((pt,i) => (i===0?'M':'L') + pt[0].toFixed(1)+','+pt[1].toFixed(1)).join(' ');
+  }
+
+  // Ticks de ejes
+  function axisTicksV() {
+    const n = 5;
+    let ticks = '';
+    for (let i = 0; i <= n; i++) {
+      let v;
+      if (escala === 'log') v = vMin * Math.pow(vMax/vMin, i/n);
+      else v = vMin + i/n * (vMax - vMin);
+      const x = tx(v);
+      ticks += `<line x1="${x.toFixed(1)}" y1="${(mt+ph).toFixed(1)}" x2="${x.toFixed(1)}" y2="${(mt+ph+5).toFixed(1)}" stroke="#bbb" stroke-width="0.8"/>`;
+      ticks += `<text x="${x.toFixed(1)}" y="${(mt+ph+16).toFixed(1)}" text-anchor="middle" font-size="9" fill="#999">${v.toFixed(3)}</text>`;
+    }
+    return ticks;
+  }
+  function axisTicksP() {
+    const n = 5;
+    let ticks = '';
+    for (let i = 0; i <= n; i++) {
+      let p;
+      if (escala === 'log') p = pMin * Math.pow(pMax/pMin, i/n);
+      else p = pMin + i/n * (pMax - pMin);
+      const y = ty(p);
+      ticks += `<line x1="${(ml-5).toFixed(1)}" y1="${y.toFixed(1)}" x2="${ml.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#bbb" stroke-width="0.8"/>`;
+      ticks += `<text x="${(ml-8).toFixed(1)}" y="${y.toFixed(1)}" text-anchor="end" dominant-baseline="central" font-size="9" fill="#999">${p.toFixed(0)}</text>`;
+    }
+    return ticks;
+  }
+
+  // Construir paths del ciclo
+  let paths = '';
+  const ne = est.length;
+
+  if (ciclo === 'otto') {
+    // 1→2 isoentrópica
+    paths += `<path d="${isoentropica(est[0].v, est[0].p, est[1].v)}" fill="none" stroke="#1d6fa8" stroke-width="2" marker-end="url(#arr)"/>`;
+    // 2→3 isocórica (vertical)
+    paths += `<line x1="${tx(est[1].v).toFixed(1)}" y1="${ty(est[1].p).toFixed(1)}" x2="${tx(est[2].v).toFixed(1)}" y2="${ty(est[2].p).toFixed(1)}" stroke="#b83c1e" stroke-width="2.5" marker-end="url(#arr)"/>`;
+    // 3→4 isoentrópica
+    paths += `<path d="${isoentropica(est[2].v, est[2].p, est[3].v)}" fill="none" stroke="#1d6fa8" stroke-width="2" marker-end="url(#arr)"/>`;
+    // 4→1 isocórica (vertical)
+    paths += `<line x1="${tx(est[3].v).toFixed(1)}" y1="${ty(est[3].p).toFixed(1)}" x2="${tx(est[0].v).toFixed(1)}" y2="${ty(est[0].p).toFixed(1)}" stroke="#1a7a52" stroke-width="2.5" marker-end="url(#arr)"/>`;
+  } else if (ciclo === 'diesel') {
+    paths += `<path d="${isoentropica(est[0].v, est[0].p, est[1].v)}" fill="none" stroke="#1d6fa8" stroke-width="2" marker-end="url(#arr)"/>`;
+    // 2→3 isobárica
+    paths += `<line x1="${tx(est[1].v).toFixed(1)}" y1="${ty(est[1].p).toFixed(1)}" x2="${tx(est[2].v).toFixed(1)}" y2="${ty(est[2].p).toFixed(1)}" stroke="#b83c1e" stroke-width="2.5" marker-end="url(#arr)"/>`;
+    paths += `<path d="${isoentropica(est[2].v, est[2].p, est[3].v)}" fill="none" stroke="#1d6fa8" stroke-width="2" marker-end="url(#arr)"/>`;
+    paths += `<line x1="${tx(est[3].v).toFixed(1)}" y1="${ty(est[3].p).toFixed(1)}" x2="${tx(est[0].v).toFixed(1)}" y2="${ty(est[0].p).toFixed(1)}" stroke="#1a7a52" stroke-width="2.5" marker-end="url(#arr)"/>`;
+  } else {
+    // Sabathé
+    paths += `<path d="${isoentropica(est[0].v, est[0].p, est[1].v)}" fill="none" stroke="#1d6fa8" stroke-width="2" marker-end="url(#arr)"/>`;
+    // 2→3 isocórica
+    paths += `<line x1="${tx(est[1].v).toFixed(1)}" y1="${ty(est[1].p).toFixed(1)}" x2="${tx(est[2].v).toFixed(1)}" y2="${ty(est[2].p).toFixed(1)}" stroke="#b83c1e" stroke-width="2.5" marker-end="url(#arr)"/>`;
+    // 3→4 isobárica
+    paths += `<line x1="${tx(est[2].v).toFixed(1)}" y1="${ty(est[2].p).toFixed(1)}" x2="${tx(est[3].v).toFixed(1)}" y2="${ty(est[3].p).toFixed(1)}" stroke="#b83c1e" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arr)"/>`;
+    paths += `<path d="${isoentropica(est[3].v, est[3].p, est[4].v)}" fill="none" stroke="#1d6fa8" stroke-width="2" marker-end="url(#arr)"/>`;
+    paths += `<line x1="${tx(est[4].v).toFixed(1)}" y1="${ty(est[4].p).toFixed(1)}" x2="${tx(est[0].v).toFixed(1)}" y2="${ty(est[0].p).toFixed(1)}" stroke="#1a7a52" stroke-width="2.5" marker-end="url(#arr)"/>`;
+  }
+
+  // Puntos de estado
+  let puntos = '';
+  const stateNums = ciclo === 'sabathe' ? ['1','2','3','4','5'] : ['1','2','3','4'];
+  est.forEach((e, i) => {
+    const x = tx(e.v), y = ty(e.p);
+    const isRight = x > W/2;
+    const lx = isRight ? x - 8 : x + 8;
+    const anchor = isRight ? 'end' : 'start';
+    puntos += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="${COLORS[i]}" stroke="white" stroke-width="1.5"/>`;
+    puntos += `<text x="${lx.toFixed(1)}" y="${(y-8).toFixed(1)}" text-anchor="${anchor}" font-size="12" font-weight="700" fill="#1a1a18" font-family="sans-serif">${stateNums[i]}</text>`;
+  });
+
+  // q_in y q_sal labels
+  const tmaxE  = est.find(e => e.T === res.Tmax);
+  const qInX   = tx(est[1].v) - 18;
+  const qInY   = (ty(est[1].p) + ty(tmaxE.p)) / 2;
+  const qSalX  = tx(est[ne-1].v) + 18;
+  const qSalY  = (ty(est[ne-1].p) + ty(est[0].p)) / 2;
+
+  svg.innerHTML = `
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <!-- Ejes -->
+  <line x1="${ml}" y1="${mt}" x2="${ml}" y2="${mt+ph}" stroke="#555" stroke-width="1.2"/>
+  <line x1="${ml}" y1="${mt+ph}" x2="${ml+pw}" y2="${mt+ph}" stroke="#555" stroke-width="1.2"/>
+  <text x="${ml-10}" y="${mt-8}" font-size="12" font-weight="600" fill="#444" font-family="sans-serif" text-anchor="end">p (kPa)</text>
+  <text x="${ml+pw+4}" y="${mt+ph+14}" font-size="12" font-weight="600" fill="#444" font-family="sans-serif">v (m³/kg)</text>
+  ${axisTicksV()}
+  ${axisTicksP()}
+  <!-- Curvas del ciclo -->
+  ${paths}
+  <!-- Puntos -->
+  ${puntos}
+  <!-- q_in -->
+  <text x="${qInX.toFixed(1)}" y="${(qInY-10).toFixed(1)}" text-anchor="end" font-size="10" fill="#b83c1e" font-family="sans-serif" font-weight="700">q_in</text>
+  <line x1="${(qInX+4).toFixed(1)}" y1="${qInY.toFixed(1)}" x2="${(tx(est[1].v)-6).toFixed(1)}" y2="${qInY.toFixed(1)}" stroke="#b83c1e" stroke-width="1.2" marker-end="url(#arr)"/>
+  <!-- q_sal -->
+  <text x="${(qSalX+2).toFixed(1)}" y="${(qSalY-10).toFixed(1)}" text-anchor="start" font-size="10" fill="#1a7a52" font-family="sans-serif" font-weight="700">q_sal</text>
+  <line x1="${(tx(est[ne-1].v)+6).toFixed(1)}" y1="${qSalY.toFixed(1)}" x2="${(qSalX).toFixed(1)}" y2="${qSalY.toFixed(1)}" stroke="#1a7a52" stroke-width="1.2" marker-end="url(#arr)"/>`;
+
+  // Nota de escala
+  document.getElementById('diagram-note').textContent =
+    `η_th = ${(res.eta*100).toFixed(1)} %  ·  PME = ${res.PME.toFixed(0)} kPa  ·  T_max = ${res.Tmax.toFixed(0)} K`;
+}
+
+// ════════════════════════════════════════════════════════
+// INICIALIZACIÓN
+// ════════════════════════════════════════════════════════
+setCiclo('otto');
+</script>
+</body>
+</html>
 
