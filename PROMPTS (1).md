@@ -245,5 +245,38 @@ Se realizaron las modificaciones en dos pasos. Primero se amplió rv a mínimo 1
 
 ---
 
+### [E3-04] Corrección crítica — r_c y r_p como parámetros calculados
+
+**Fecha:** 29/04/2025  
+**Etapa:** 3 — Corrección de error conceptual en ciclos Diesel y Sabathé
+
+**Origen de la corrección:** Detectado por el grupo durante el uso de la aplicación.
+
+**Error detectado:**
+Al explorar la app con distintos valores de r_v, se observó que en los ciclos Diesel y Sabathé la PME *disminuía* al aumentar la relación de compresión — comportamiento opuesto al ciclo Otto y físicamente inconsistente con la operación real de un motor. El grupo identificó la causa: r_c era un parámetro de entrada independiente de r_v, lo que implica que al subir r_v la cantidad de combustible "inyectado" (representada por r_c) permanecía fija. En un motor real, al modificar r_v el sistema de inyección ajusta automáticamente la cantidad de combustible para mantener la potencia requerida — r_c no es un parámetro libre sino una consecuencia del diseño.
+
+**Corrección implementada:**
+Se rediseñaron los módulos calcularDiesel() y calcularSabathe() para que r_c y r_p sean **parámetros calculados** a partir de q_in (que sí es fijo para un dado combustible y λ), en lugar de entradas independientes.
+
+Para el ciclo Diesel:
+26r_c = 1 + rac{q_{in}}{c_p \cdot T_2}26
+
+Para el ciclo Sabathé, se introduce α (fracción de q_in aportada a volumen constante) como único parámetro de diseño del usuario:
+26r_p = 1 + rac{lpha \cdot q_{in}}{c_v \cdot T_2} \qquad r_c = 1 + rac{(1-lpha) \cdot q_{in}}{c_p \cdot T_3}26
+
+**Cambios en la interfaz:**
+- Ciclo Diesel: slider r_c eliminado; r_c se muestra como valor calculado.
+- Ciclo Sabathé: sliders r_c y r_p eliminados; se incorpora slider α (0,1 – 0,9); r_c y r_p se muestran como valores calculados.
+
+**Decisiones:**
+- ✅ Aceptado: corrección completa del modelo físico para Diesel y Sabathé.
+- ✅ Aceptado: introducción de α como parámetro de diseño del Sabathé.
+- ✅ Aceptado: r_c y r_p mostrados como outputs calculados para trazabilidad.
+- ❌ Rechazado (versión anterior): r_c como entrada independiente — produce PME incorrectas y comportamiento físicamente irreal al variar r_v.
+
+**Justificación:** El error fue detectado por análisis crítico del comportamiento de la app, no por Claude. La corrección garantiza que la app produzca PME correctas para cualquier valor de r_v en los tres ciclos. Este es el tipo de validación que distingue el uso reflexivo de la IA del uso irreflexivo: la herramienta generó el código, pero fue el análisis del grupo el que identificó la inconsistencia física.
+
+---
+
 *Documento generado con asistencia de Claude (Anthropic) — Modelo: claude-sonnet-4-6*  
 *Última actualización: 29/04/2025*
