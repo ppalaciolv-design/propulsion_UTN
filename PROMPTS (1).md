@@ -278,5 +278,49 @@ Para el ciclo Sabathé, se introduce α (fracción de q_in aportada a volumen co
 
 ---
 
+### [E3-05] Corrección crítica — validación física del ciclo Diesel: condición r_c < r_v
+
+**Fecha:** 05/05/2025  
+**Etapa:** 3 — Corrección de error de validación en ciclo Diesel y Sabathé
+
+**Origen de la corrección:** Detectado por el grupo durante el uso de la aplicación con r_v = 4.
+
+**Error detectado:**
+Al explorar la app con r_v bajos (ejemplo: r_v = 4), el diagrama p-v del ciclo Diesel mostraba una geometría imposible: estados fuera de posición, curvas de expansión que se comportaban como compresiones, y valores de PME y T sin sentido físico. La causa raíz: la corrección anterior (E3-04) introdujo r_c como parámetro calculado a partir de q_in, lo cual es físicamente correcto, pero no incluía ninguna validación de que el resultado fuera geometricamente posible.
+
+**Análisis del fallo:**
+Con q_in ≈ 2.527 kJ/kg (condiciones de la misión) y r_v = 4:
+
+  r_c = 1 + q_in / (c_p × T_2) = 1 + 2.527×10³ / (1004,7 × 484) ≈ 6,19
+
+Como r_c = 6,19 > r_v = 4, el volumen al final de la combustión isobárica (v_3 = v_2 × r_c) supera el volumen en el PMI (v_1). Esto es geométricamente imposible: el pistón no puede descender más allá del PMI. El código anterior intentaba calcular la expansión 3→4 desde un estado 3 inexistente, produciendo temperaturas y presiones que aumentaban durante la "expansión" — violación directa del segundo principio para ese proceso.
+
+Esta condición impone un límite inferior físico a r_v para el ciclo Diesel:
+
+  r_v mín. ≈ 6 para las condiciones de la misión (C₈H₁₈, λ = 1,10, 5.000 ft)
+
+Nótese que los motores Diesel reales operan con r_v entre 14 y 22, justamente para garantizar r_c << r_v con margen amplio.
+
+**Corrección implementada:**
+Se agregó una validación física en calcularDiesel() y calcularSabathe() inmediatamente después de calcular r_c:
+
+- Diesel: si r_c ≥ r_v → la función devuelve un objeto de error en lugar de estados.
+- Sabathé: si r_p × r_c ≥ r_v → ídem.
+
+En update(), si se detecta el error:
+- El diagrama SVG muestra un panel de advertencia en rojo con el valor de r_c calculado, r_v actual, y la indicación "Aumente r_v".
+- Los paneles de resultados muestran el mensaje de error en lugar de valores sin sentido.
+- No se dibuja ningún ciclo ni se calculan KPIs.
+
+**Decisiones:**
+- ✅ Aceptado: validación física r_c < r_v (Diesel) y r_p × r_c < r_v (Sabathé) como prerrequisito del cálculo.
+- ✅ Aceptado: panel de error en el diagrama SVG con explicación física del problema y sugerencia de acción.
+- ✅ Aceptado: paneles de resultados limpios (sin valores espurios) cuando el ciclo es inválido.
+- ❌ Rechazado: mostrar los valores calculados aunque el ciclo sea inválido — producía confusión y resultados físicamente absurdos.
+
+**Justificación:** El error fue detectado por el grupo al explorar r_v = 4 en el ciclo Diesel y observar que el diagrama no correspondía a ningún ciclo reconocible. La corrección refuerza el principio de que una herramienta de ingeniería debe fallar explícitamente y con información útil cuando los parámetros de entrada están fuera del dominio físicamente válido, en lugar de producir resultados silenciosamente incorrectos.
+
+---
+
 *Documento generado con asistencia de Claude (Anthropic) — Modelo: claude-sonnet-4-6*  
-*Última actualización: 29/04/2025*
+*Última actualización: 05/05/2025*
