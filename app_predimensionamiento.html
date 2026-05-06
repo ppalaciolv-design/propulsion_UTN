@@ -497,8 +497,8 @@ function calcularSabathe(T1, p1, rv, alpha, kap, qin) {
       msg: `r_p × r_c = ${(rp*rc).toFixed(2)} ≥ r_v = ${rv.toFixed(1)} — Ciclo inválido: la combustión supera el volumen del PMI. Aumente r_v.` };
   }
   const T4 = T3 * rc; const p4 = p3;       const v4 = v3 * rc;
-  const T5 = T4 * Math.pow(rp * rc / rv, kap - 1);
-  const p5 = p4 / Math.pow(rv / (rp * rc), kap);
+  const T5 = T4 * Math.pow(rc / rv, kap - 1);
+  const p5 = p4 * Math.pow(rc / rv, kap);
   const v5 = v1;
   const eta = 1 - (1 / Math.pow(rv, kap - 1)) *
     (rp * Math.pow(rc, kap) - 1) / ((rp - 1) + kap * rp * (rc - 1));
