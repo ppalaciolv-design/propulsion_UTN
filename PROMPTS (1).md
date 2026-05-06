@@ -322,5 +322,57 @@ En update(), si se detecta el error:
 
 ---
 
+### [E3-06] Corrección crítica — expansión isoentrópica 4→5 en ciclo Sabathé: factor r_p incorrecto
+
+**Fecha:** 05/05/2025  
+**Etapa:** 3 — Corrección de error de cálculo en ciclo Sabathé
+
+**Origen de la corrección:** Detectado por el grupo al verificar el diagrama p-v del ciclo Sabathé.
+
+**Error detectado:**
+Al revisar el diagrama p-v del ciclo Sabathé con los parámetros de la misión (r_v = 7,8, α = 0,5), se observó que el estado 5 aparecía en una posición anómala: a pesar de ser el resultado de una expansión isoentrópica desde el estado 4, sus valores de temperatura y presión eran apenas inferiores a los del estado 4, y la presión resultante era físicamente irrazonable (p₅ = 3.709 kPa, comparable a la presión máxima del ciclo). El diagrama mostraba la línea de rechazo de calor (5→1) partiendo desde una altura incompatible con un proceso de expansión real.
+
+**Análisis del fallo:**
+La causa fue identificada en las fórmulas de cálculo del estado 5 en la función calcularSabathe(). El código implementado por la IA era:
+
+```javascript
+T5 = T4 * (rp * rc / rv)^(κ−1)
+p5 = p4 / (rv / (rp * rc))^κ
+```
+
+El factor r_p no tiene ningún rol en la expansión 4→5. Dicho proceso es puramente isoentrópico entre el estado 4 (a volumen v₄ = v₂ · r_c) y el estado 5 (a volumen v₅ = v₁). La relación de volúmenes relevante es simplemente:
+
+$$\frac{v_4}{v_5} = \frac{v_2 \cdot r_c}{v_1} = \frac{r_c}{r_v}$$
+
+El parámetro r_p solo aparece en el proceso isocórico 2→3 (donde modifica la presión a volumen constante) y en la expresión del rendimiento térmico. No interviene en los volúmenes del ciclo y por lo tanto no debe aparecer en las fórmulas de expansión.
+
+La consecuencia fue que tanto T₅ como p₅ quedaban sobreestimados por un factor de r_p^(κ−1) y r_p^κ respectivamente. Esto provocaba que q_sal y w_neto calculados desde los estados fueran incorrectos (w_neto ≈ 404 kJ/kg en lugar de ≈ 1.361 kJ/kg). Paradójicamente, η_th mostraba el valor correcto (53,9%) porque se calcula mediante la fórmula cerrada del ciclo, independientemente de los estados — creando una inconsistencia interna silenciosa que la app no detectaba.
+
+**Corrección implementada:**
+```javascript
+// INCORRECTO (generado por IA):
+T5 = T4 * (rp * rc / rv)^(κ−1)
+p5 = p4 / (rv / (rp * rc))^κ
+
+// CORRECTO:
+T5 = T4 * (rc / rv)^(κ−1)
+p5 = p4 * (rc / rv)^κ
+```
+
+Valores corregidos con los parámetros de la misión:
+- T₅: 3.236 K → **1.903 K**
+- p₅: 3.709 kPa → **576 kPa**
+- w_neto: 404 kJ/kg → **1.361 kJ/kg**
+- η_th: 53,9% (sin cambio — ya era correcto por fórmula cerrada)
+
+**Decisiones:**
+- ✅ Aceptado: corrección de las fórmulas de expansión 4→5 eliminando el factor r_p.
+- ✅ Aceptado: verificación cruzada de consistencia entre η calculado por fórmula y η calculado desde estados (ahora coinciden).
+- ❌ Rechazado (versión anterior): fórmulas con r_p*r_c/r_v — producían estados termodinámicos incorrectos con inconsistencia interna silenciosa entre η y w_neto.
+
+**Justificación:** El error fue detectado por el grupo al observar que el estado 5 en el diagrama p-v aparecía en una posición físicamente incompatible con el resultado de una expansión. Ninguna alerta automática de la app señalaba el problema porque η seguía mostrando un valor aparentemente razonable. Este caso ilustra un riesgo concreto del uso irreflexivo de herramientas de IA: la plausibilidad superficial de un resultado (η correcto) puede enmascarar errores profundos en los estados intermedios. La verificación sistemática estado por estado fue la única forma de detectarlo.
+
+---
+
 *Documento generado con asistencia de Claude (Anthropic) — Modelo: claude-sonnet-4-6*  
 *Última actualización: 05/05/2025*
