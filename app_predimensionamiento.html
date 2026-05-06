@@ -260,7 +260,7 @@ input[type=number]:focus, select:focus {
           <label>Combustible</label>
           <select id="sel_fuel" onchange="update()">
             <option value="C8H18">C₈H₁₈ — Isoctano (AVGAS)</option>
-            <option value="C7H16">C₇H₁₆ — Heptano</option>
+            <option value="C12H26">C₁₂H₂₆ — Dodecano (Jet-A1)</option>
           </select>
         </div>
         <div class="field">
@@ -414,8 +414,8 @@ function calcularISA(h_ft) {
 
 // ── MÓDULO COMBUSTIÓN ─────────────────────────────────────
 const FUELS = {
-  C8H18: { M: 114.23, nC: 8,  nH: 18, PCI: 44300 },
-  C7H16: { M: 100.20, nC: 7,  nH: 16, PCI: 44600 }
+  C8H18:  { M: 114.23, nC: 8,  nH: 18, PCI: 44300 },
+  C12H26: { M: 170.34, nC: 12, nH: 26, PCI: 43150 }   // Jet-A1 surrogate — PCI: fuente BP/Wikipedia; AFR_st inferido de combustión estequiométrica
 };
 function calcularCombustion(key, lambda) {
   const f = FUELS[key];
