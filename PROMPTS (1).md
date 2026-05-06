@@ -374,5 +374,36 @@ Valores corregidos con los parámetros de la misión:
 
 ---
 
+### [E3-07] Mejora — reemplazo de Heptano por Dodecano (C₁₂H₂₆ / Jet-A1) en selector de combustibles
+
+**Fecha:** 05/05/2025  
+**Etapa:** 3 — Mejora de pertinencia aeronáutica en el selector de combustibles
+
+**Origen:** Revisión crítica del grupo al comparar ciclos y evaluar la coherencia de los combustibles disponibles con sus aplicaciones reales.
+
+**Situación previa:**
+La app ofrecía dos combustibles: C₈H₁₈ (isooctano / AVGAS) y C₇H₁₆ (heptano). El heptano es el combustible de referencia del índice de octano (RON = 0) y no tiene aplicación aeronáutica operacional. Su presencia en la app era un remanente sin justificación física ni práctica.
+
+**Decisión:**
+Se reemplazó el heptano por dodecano (C₁₂H₂₆), sustituto termodinámico estándar del Jet-A1. Esta elección es aeronáuticamente relevante: los motores diesel aeronáuticos de pistón (Thielert/Centurion, instalados en DA40 y DA42, entre otros) operan con Jet-A1, el mismo queroseno usado por turborreactores — una ventaja operacional concreta en términos de disponibilidad de combustible en aeropuertos.
+
+**Datos implementados:**
+
+| Parámetro | Valor | Fuente |
+|-----------|-------|--------|
+| Fórmula | C₁₂H₂₆ | Sustituto estándar Jet-A1 (bibliografía UPM) |
+| Masa molar | 170,34 g/mol | Calculado |
+| PCI | 43.150 kJ/kg | BP / Wikipedia (Jet-A1) |
+| AFR_stoich | 14,95 | **Inferido** — C₁₂H₂₆ + 18,5 O₂ → 12 CO₂ + 13 H₂O |
+
+El AFR estequiométrico no fue tomado de una fuente primaria validada — se calculó a partir de la ecuación de combustión completa. Se deja constancia de esto para trazabilidad.
+
+**Decisiones:**
+- ✅ Aceptado: reemplazo de C₇H₁₆ por C₁₂H₂₆ como segundo combustible disponible.
+- ✅ Aceptado: comentario en el código marcando origen del PCI e inferencia del AFR.
+- ✅ Mantenido: C₈H₁₈ (AVGAS) como combustible principal del grupo (misión TP1).
+
+---
+
 *Documento generado con asistencia de Claude (Anthropic) — Modelo: claude-sonnet-4-6*  
 *Última actualización: 05/05/2025*
